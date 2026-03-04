@@ -1,0 +1,43 @@
+name: Super Fast Playlist Update
+
+on:
+  schedule:
+    # প্রতি ৬ ঘণ্টা পরপর অটোমেটিক রান হবে
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # আপনি চাইলে ম্যানুয়ালি বাটন টিপেও রান করতে পারবেন
+
+jobs:
+  update_playlist:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ১. রিপোজিটরি থেকে কোড এবং ফাইল নামানো
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ২. পাইথন সেটআপ করা
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # ৩. প্রয়োজনীয় লাইব্রেরি ইনস্টল করা
+      - name: Install Dependencies
+        run: |
+          pip install aiohttp pyzipper
+
+      # ৪. পাইথন স্ক্রিপ্টটি রান করা (এখানে পাসওয়ার্ড কাজ করবে)
+      - name: Run Fast Updater
+        env:
+          ZIP_PASSWORD: ${{ secrets.ZIP_PASSWORD }}
+        run: python fast_updater.py
+
+      # ৫. আপডেট হওয়া playlist.m3u ফাইলটি রিপোজিটরিতে সেভ করা
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add playlist.m3u
+          git commit -m "Auto Update: $(date)" || echo "No changes to commit"
+          git push
